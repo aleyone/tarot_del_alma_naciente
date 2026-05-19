@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tarot del Alma Naciente</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Cinzel:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    /* ── Variables ── */
+    :root {
+      --bg:          #0d0b14;
+      --bg2:         #13101f;
+      --surface:     #1c1729;
+      --border:      rgba(180,150,100,0.18);
+      --gold:        #c9a96e;
+      --gold-light:  #e8cfa0;
+      --gold-dim:    rgba(201,169,110,0.35);
+      --mauve:       #8b7a9e;
+      --mauve-light: #b8a8cc;
+      --rose:        #9e7a8b;
+      --teal:        #5a9e9a;
+      --text:        #e8e0d5;
+      --text-dim:    #9e96a8;
+      --radius:      14px;
+      --radius-card: 18px;
+    }
+
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Starfield background ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 20%, rgba(90,60,140,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 80%, rgba(60,90,120,0.15) 0%, transparent 60%),
+        radial-gradient(ellipse at 50% 50%, rgba(140,100,60,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Layout ── */
+    .wrap { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 0 20px; }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      padding: 56px 20px 40px;
+    }
+
+    .header-sigil {
+      font-size: 2rem;
+      opacity: 0.6;
+      letter-spacing: 0.4em;
+      margin-bottom: 16px;
+      color: var(--gold);
+    }
+
+    header h1 {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.8rem, 5vw, 3rem);
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      color: var(--gold-light);
+      line-height: 1.2;
+      margin-bottom: 12px;
+    }
+
+    header h1 span {
+      display: block;
+      font-size: 0.55em;
+      letter-spacing: 0.25em;
+      color: var(--mauve-light);
+      font-weight: 400;
+      margin-top: 4px;
+    }
+
+    header p.tagline {
+      font-size: 1.1rem;
+      font-style: italic;
+      color: var(--text-dim);
+      max-width: 500px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    .divider {
+      width: 120px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+      margin: 24px auto;
+    }
+
+    /* ── Screens ── */
+    .screen { display: none; animation: fadeIn 0.6s ease; }
+    .screen.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Section titles ── */
+    .section-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--gold);
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    /* ── Spread Grid ── */
+    .spreads-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+
+    .spread-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.2s, background 0.2s;
+      text-align: center;
+    }
+
+    .spread-card:hover {
+      border-color: var(--gold-dim);
+      transform: translateY(-2px);
+      background: rgba(28,23,41,0.9);
+    }
+
+    .spread-card.selected {
+      border-color: var(--gold);
+      background: rgba(201,169,110,0.07);
+    }
+
+    .spread-card .spread-icon {
+      font-size: 1.6rem;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .spread-card .spread-name {
+      font-family: 'Cinzel', serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.12em;
+      color: var(--gold-light);
+      margin-bottom: 6px;
+    }
+
+    .spread-card .spread-count {
+      font-size: 0.78rem;
+      color: var(--mauve-light);
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .spread-card .spread-desc {
+      font-size: 0.92rem;
+      color: var(--text-dim);
+      font-style: italic;
+      line-height: 1.5;
+    }
+
+    .spread-positions {
+      display: flex;
+      gap: 5px;
+      justify-content: center;
+      margin-top: 12px;
+    }
+
+    .spread-dot {
+      width: 8px;
+      height: 12px;
+      border-radius: 4px;
+      background: var(--border);
+      border: 1px solid var(--gold-dim);
+    }
+
+    .spread-card.selected .spread-dot {
+      background: var(--gold-dim);
+    }
+
+    /* ── Question input ── */
+    .question-wrap {
+      max-width: 600px;
+      margin: 0 auto 40px;
+    }
+
+    .question-label {
+      display: block;
+      font-size: 1rem;
+      font-style: italic;
+      color: var(--text-dim);
+      text-align: center;
+      margin-bottom: 14px;
+    }
+
+    textarea.question-input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      padding: 16px 20px;
+      resize: none;
+      transition: border-color 0.2s;
+      line-height: 1.6;
+    }
+
+    textarea.question-input:focus {
+      outline: none;
+      border-color: var(--gold-dim);
+    }
+
+    textarea.question-input::placeholder {
+      color: var(--text-dim);
+      font-style: italic;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.82rem;
+      letter-spacing: 0.15em;
+      padding: 14px 32px;
+      border-radius: 50px;
+      border: 1px solid var(--gold-dim);
+      background: transparent;
+      color: var(--gold-light);
+      cursor: pointer;
+      transition: all 0.25s;
+      text-transform: uppercase;
+    }
+
+    .btn:hover {
+      background: rgba(201,169,110,0.1);
+      border-color: var(--gold);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, rgba(201,169,110,0.2), rgba(201,169,110,0.08));
+      border-color: var(--gold);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, rgba(201,169,110,0.3), rgba(201,169,110,0.15));
+    }
+
+    .btn-ghost {
+      border-color: var(--border);
+      color: var(--text-dim);
+      font-size: 0.78rem;
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--mauve);
+      color: var(--mauve-light);
+    }
+
+    .btn-whatsapp {
+      background: rgba(37,211,102,0.12);
+      border-color: rgba(37,211,102,0.4);
+      color: #6ee09e;
+    }
+
+    .btn-whatsapp:hover {
+      background: rgba(37,211,102,0.2);
+      border-color: rgba(37,211,102,0.7);
+    }
+
+    .btn-pdf {
+      background: rgba(201,169,110,0.1);
+      border-color: var(--gold-dim);
+      color: var(--gold-light);
+    }
+
+    .btn-pdf:hover {
+      background: rgba(201,169,110,0.2);
+    }
+
+    .btn-center { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+
+    /* ── Card Shuffle Screen ── */
+    .shuffle-area {
+      text-align: center;
+      padding: 40px 0;
+    }
+
+    .shuffle-deck {
+      position: relative;
+      width: 160px;
+      height: 260px;
+      margin: 0 auto 40px;
+      cursor: pointer;
+    }
+
+    .deck-card {
+      position: absolute;
+      width: 140px;
+      height: 240px;
+      border-radius: var(--radius-card);
+      background: linear-gradient(135deg, #1a1530 0%, #0f0c1a 100%);
+      border: 1px solid var(--gold-dim);
+      transition: transform 0.3s;
+    }
+
+    .deck-card::after {
+      content: '✦';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%,-50%);
+      font-size: 1.8rem;
+      color: var(--gold-dim);
+    }
+
+    .deck-card:nth-child(1) { transform: rotate(-4deg) translate(-8px, 4px); }
+    .deck-card:nth-child(2) { transform: rotate(-2deg) translate(-4px, 2px); }
+    .deck-card:nth-child(3) { transform: rotate(0deg); }
+
+    .shuffle-deck:hover .deck-card:nth-child(1) { transform: rotate(-6deg) translate(-12px, 6px); }
+    .shuffle-deck:hover .deck-card:nth-child(2) { transform: rotate(-3deg) translate(-6px, 3px); }
+
+    .shuffle-deck.shuffling .deck-card {
+      animation: shuffleAnim 0.5s ease-in-out;
+    }
+
+    @keyframes shuffleAnim {
+      0%   { transform: rotate(0deg) translateX(0); }
+      25%  { transform: rotate(8deg) translateX(20px); }
+      75%  { transform: rotate(-8deg) translateX(-20px); }
+      100% { transform: rotate(0deg) translateX(0); }
+    }
+
+    .shuffle-instruction {
+      font-size: 1rem;
+      font-style: italic;
+      color: var(--text-dim);
+      margin-bottom: 32px;
+      line-height: 1.7;
+    }
+
+    .shuffle-count {
+      font-family: 'Cinzel', serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.25em;
+      color: var(--gold-dim);
+      margin-top: 16px;
+    }
+
+    /* ── Cards Reveal Screen ── */
+    .reveal-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .reveal-header h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 1.1rem;
+      letter-spacing: 0.15em;
+      color: var(--gold-light);
+      margin-bottom: 8px;
+    }
+
+    .reveal-question {
+      font-size: 1rem;
+      font-style: italic;
+      color: var(--text-dim);
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .cards-layout {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      margin-bottom: 48px;
+    }
+
+    /* 1 card */
+    .cards-layout.layout-1 { gap: 0; }
+
+    .card-slot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-position-label {
+      font-family: 'Cinzel', serif;
+      font-size: 0.68rem;
+      letter-spacing: 0.2em;
+      color: var(--mauve-light);
+      text-align: center;
+      text-transform: uppercase;
+      max-width: 120px;
+    }
+
+    .card-face {
+      width: 120px;
+      height: 200px;
+      border-radius: var(--radius-card);
+      background: linear-gradient(135deg, #1a1530, #0f0c1a);
+      border: 1px solid var(--gold-dim);
+      cursor: pointer;
+      transition: transform 0.3s;
+      perspective: 800px;
+      position: relative;
+    }
+
+    .card-face.size-lg { width: 150px; height: 250px; }
+    .card-face.size-sm { width: 100px; height: 167px; }
+
+    .card-inner {
+      position: absolute;
+      inset: 0;
+      transform-style: preserve-3d;
+      transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: var(--radius-card);
+    }
+
+    .card-face.revealed .card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .card-front, .card-back {
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius-card);
+      backface-visibility: hidden;
+    }
+
+    .card-back {
+      background: linear-gradient(135deg, #1a1530 0%, #0f0c1a 100%);
+      border: 1px solid var(--gold-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      color: var(--gold-dim);
+    }
+
+    .card-front {
+      transform: rotateY(180deg);
+      overflow: hidden;
+    }
+
+    .card-front img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: var(--radius-card);
+    }
+
+    .card-face:not(.revealed):hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(201,169,110,0.15);
+    }
+
+    .reveal-all-hint {
+      text-align: center;
+      font-size: 0.88rem;
+      font-style: italic;
+      color: var(--text-dim);
+      margin-bottom: 24px;
+    }
+
+    /* ── Interpretation Screen ── */
+    .interpretation-wrap {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .selected-cards-row {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 36px;
+    }
+
+    .mini-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mini-card img {
+      width: 72px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid var(--gold-dim);
+    }
+
+    .mini-card span {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      text-align: center;
+      font-style: italic;
+      max-width: 80px;
+    }
+
+    .loading-state {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .loading-orb {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 40%, var(--gold-light), var(--gold-dim), transparent);
+      margin: 0 auto 24px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.7; }
+      50%       { transform: scale(1.15); opacity: 1; }
+    }
+
+    .loading-text {
+      font-size: 1rem;
+      font-style: italic;
+      color: var(--text-dim);
+      animation: fadePulse 3s ease-in-out infinite;
+    }
+
+    @keyframes fadePulse {
+      0%, 100% { opacity: 0.5; }
+      50%       { opacity: 1; }
+    }
+
+    /* ── Reading content ── */
+    .reading-content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 36px 40px;
+      line-height: 1.85;
+      font-size: 1.05rem;
+    }
+
+    @media (max-width: 600px) {
+      .reading-content { padding: 24px 20px; }
+    }
+
+    .reading-content h1 {
+      font-family: 'Cinzel', serif;
+      font-size: 1rem;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      margin: 32px 0 14px;
+      text-transform: uppercase;
+    }
+
+    .reading-content h1:first-child { margin-top: 0; }
+
+    .reading-content h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 0.88rem;
+      letter-spacing: 0.15em;
+      color: var(--mauve-light);
+      margin: 28px 0 12px;
+    }
+
+    .reading-content p {
+      color: var(--text);
+      margin-bottom: 14px;
+    }
+
+    .reading-content em {
+      color: var(--gold-light);
+      font-style: italic;
+    }
+
+    .reading-content strong {
+      color: var(--gold-light);
+      font-weight: 500;
+    }
+
+    .reading-content blockquote {
+      border-left: 2px solid var(--gold-dim);
+      padding: 10px 0 10px 20px;
+      margin: 20px 0;
+      font-style: italic;
+      color: var(--mauve-light);
+    }
+
+    /* Action buttons after reading */
+    .reading-actions {
+      margin-top: 36px;
+      padding-top: 28px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 48px 20px 32px;
+      border-top: 1px solid var(--border);
+      margin-top: 80px;
+    }
+
+    footer .footer-name {
+      font-family: 'Cinzel', serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.2em;
+      color: var(--gold-dim);
+      margin-bottom: 8px;
+    }
+
+    footer .footer-tagline {
+      font-size: 0.85rem;
+      font-style: italic;
+      color: var(--text-dim);
+      opacity: 0.6;
+    }
+
+    /* ── PDF hidden template ── */
+    #pdf-template {
+      position: fixed;
+      left: -9999px;
+      top: 0;
+      width: 794px;
+      background: #0d0b14;
+      color: #e8e0d5;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      padding: 60px;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    #pdf-template .pdf-header {
+      text-align: center;
+      border-bottom: 1px solid rgba(201,169,110,0.3);
+      padding-bottom: 30px;
+      margin-bottom: 30px;
+    }
+
+    #pdf-template .pdf-title {
+      font-family: 'Cinzel', serif;
+      font-size: 22px;
+      letter-spacing: 0.15em;
+      color: #c9a96e;
+      margin-bottom: 6px;
+    }
+
+    #pdf-template .pdf-subtitle {
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      color: #8b7a9e;
+      text-transform: uppercase;
+    }
+
+    #pdf-template .pdf-question {
+      font-style: italic;
+      color: #b8a8cc;
+      text-align: center;
+      margin-bottom: 24px;
+      font-size: 13px;
+    }
+
+    #pdf-template .pdf-cards-row {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+
+    #pdf-template .pdf-mini-card {
+      text-align: center;
+    }
+
+    #pdf-template .pdf-mini-card img {
+      width: 80px;
+      height: 133px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid rgba(201,169,110,0.4);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    #pdf-template .pdf-mini-card span {
+      font-size: 9px;
+      color: #9e96a8;
+      letter-spacing: 0.05em;
+    }
+
+    #pdf-template .pdf-reading {
+      white-space: pre-wrap;
+      color: #e8e0d5;
+    }
+
+    #pdf-template .pdf-reading h1 {
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: #c9a96e;
+      text-transform: uppercase;
+      margin: 24px 0 8px;
+    }
+
+    #pdf-template .pdf-reading p {
+      margin-bottom: 10px;
+      font-size: 12px;
+      line-height: 1.75;
+    }
+
+    #pdf-template .pdf-footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(201,169,110,0.2);
+      text-align: center;
+      font-size: 10px;
+      color: rgba(201,169,110,0.5);
+      letter-spacing: 0.15em;
+      font-family: 'Cinzel', serif;
+    }
+
+    /* ── Utility ── */
+    .mt-8 { margin-top: 8px; }
+    .mt-16 { margin-top: 16px; }
+    .mt-32 { margin-top: 32px; }
+    .text-center { text-align: center; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════ HEADER ══════════════════════════════ -->
+<header>
+  <div class="header-sigil">✦ ✦ ✦</div>
+  <h1>
+    Tarot del Alma Naciente
+    <span>Arcanos del Origen</span>
+  </h1>
+  <div class="divider"></div>
+  <p class="tagline">Un viaje simbólico desde la concepción hasta el umbral de la vida</p>
+</header>
+
+<!-- ══════════════════════════════ SCREENS ══════════════════════════════ -->
+<main class="wrap">
+
+  <!-- ── Screen 1: Choose Spread ── -->
+  <section id="screen-spread" class="screen active">
+    <p class="section-title">Elige tu tirada</p>
+    <div class="spreads-grid" id="spreads-grid"></div>
+
+    <div class="question-wrap">
+      <label class="question-label" for="question-input">
+        ¿Qué quieres explorar hoy? <em style="font-size:0.85em; opacity:0.7">(opcional)</em>
+      </label>
+      <textarea
+        id="question-input"
+        class="question-input"
+        rows="3"
+        placeholder="Escribe tu pregunta o intención... o deja que las cartas hablen solas."
+      ></textarea>
+    </div>
+
+    <div class="btn-center">
+      <button class="btn btn-primary" id="btn-to-shuffle" onclick="goToShuffle()">
+        ✦ Continuar
+      </button>
+    </div>
+  </section>
+
+  <!-- ── Screen 2: Shuffle ── -->
+  <section id="screen-shuffle" class="screen">
+    <div class="shuffle-area">
+      <p class="section-title" id="shuffle-spread-name"></p>
+
+      <p class="shuffle-instruction">
+        Respira profundo.<br/>
+        Sostén tu pregunta en el corazón.<br/>
+        Cuando sientas que estás listo, haz clic en el mazo para mezclar.
+      </p>
+
+      <div class="shuffle-deck" id="shuffle-deck" onclick="shuffleDeck()">
+        <div class="deck-card"></div>
+        <div class="deck-card"></div>
+        <div class="deck-card"></div>
+      </div>
+
+      <div class="shuffle-count" id="shuffle-count">Mezclas: 0</div>
+
+      <div class="btn-center mt-32">
+        <button class="btn btn-primary" id="btn-draw" onclick="drawCards()" style="display:none">
+          ✦ Revelar cartas
+        </button>
+        <button class="btn btn-ghost" onclick="goToSpread()">← Volver</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Screen 3: Reveal ── -->
+  <section id="screen-reveal" class="screen">
+    <div class="reveal-header">
+      <h2 id="reveal-spread-title"></h2>
+      <p class="reveal-question" id="reveal-question-display"></p>
+    </div>
+
+    <p class="reveal-all-hint">Haz clic en cada carta para revelarla</p>
+
+    <div class="cards-layout" id="cards-layout"></div>
+
+    <div class="btn-center">
+      <button class="btn btn-primary" id="btn-interpret" onclick="goToInterpretation()" style="display:none">
+        ✦ Interpretar mi tirada
+      </button>
+      <button class="btn btn-ghost" onclick="goToShuffle()">← Volver a mezclar</button>
+    </div>
+  </section>
+
+  <!-- ── Screen 4: Interpretation ── -->
+  <section id="screen-interpretation" class="screen">
+    <div class="interpretation-wrap">
+
+      <div class="selected-cards-row" id="summary-cards-row"></div>
+
+      <div id="loading-state" class="loading-state">
+        <div class="loading-orb"></div>
+        <p class="loading-text" id="loading-text">Las cartas están hablando...</p>
+      </div>
+
+      <div id="reading-output" style="display:none">
+        <div class="reading-content" id="reading-content"></div>
+        <div class="reading-actions">
+          <button class="btn btn-pdf" onclick="downloadPDF()">📄 Descargar PDF</button>
+          <button class="btn btn-whatsapp" onclick="shareWhatsApp()">💚 Compartir por WhatsApp</button>
+          <button class="btn btn-ghost" onclick="startOver()">✦ Nueva tirada</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ══════════════════════════════ FOOTER ══════════════════════════════ -->
+<footer>
+  <p class="footer-name">David Gil</p>
+  <p class="footer-tagline">Tarot del Alma Naciente · Arcanos del Origen</p>
+</footer>
+
+<!-- ══════════════════════════════ PDF TEMPLATE ══════════════════════════════ -->
+<div id="pdf-template">
+  <div class="pdf-header">
+    <div class="pdf-title">Tarot del Alma Naciente</div>
+    <div class="pdf-subtitle">Lectura Personal · Arcanos del Origen</div>
+  </div>
+  <div class="pdf-question" id="pdf-question"></div>
+  <div class="pdf-cards-row" id="pdf-cards-row"></div>
+  <div class="pdf-reading" id="pdf-reading"></div>
+  <div class="pdf-footer">David Gil · Tarot del Alma Naciente</div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════════════
+
+const CARDS = [
+  { id: '22_EL_LOCO',           num: 0,  nombre: 'El Loco',              etapa: 'Vida en el mundo',           clave: 'Renacimiento, libertad, confianza radical' },
+  { id: '01_EL_MAGO',           num: 1,  nombre: 'El Mago',              etapa: 'El espermatozoide',          clave: 'Movimiento, intención, propósito' },
+  { id: '02_LA_SACERDOTISA',    num: 2,  nombre: 'La Sacerdotisa',       etapa: 'El óvulo en viaje',          clave: 'Receptividad, sabiduría interna, espera sagrada' },
+  { id: '03_LA_EMPERATRIZ',     num: 3,  nombre: 'La Emperatriz',        etapa: 'Concepción',                 clave: 'Fecundación, potencia vital, manifestación' },
+  { id: '04_EL_EMPERADOR',      num: 4,  nombre: 'El Emperador',         etapa: 'Implantación',               clave: 'Arraigo, estructura, anclaje material' },
+  { id: '05_EL_SACERDOTE',      num: 5,  nombre: 'El Sacerdote',         etapa: 'Activación genética',        clave: 'Sabiduría biológica, linaje, herencia' },
+  { id: '06_LOS_ENAMORADOS',    num: 6,  nombre: 'Los Enamorados',       etapa: 'Unión cromosómica',          clave: 'Dualidad integrada, elección vital' },
+  { id: '07_EL_CARRO',          num: 7,  nombre: 'El Carro',             etapa: 'Primera división celular',   clave: 'Dirección interna, impulso, diferenciación' },
+  { id: '08_LA_JUSTICIA',       num: 8,  nombre: 'La Justicia',          etapa: 'División celular (mórula)',  clave: 'Orden sagrado, equilibrio natural, simetría' },
+  { id: '09_EL_ERMITAÑO',       num: 9,  nombre: 'El Ermitaño',          etapa: 'Recogimiento en el útero',   clave: 'Introspección, sabiduría interna, quietud' },
+  { id: '10_RUEDA_DE_LA_FORTUNA', num: 10, nombre: 'Rueda de la Fortuna', etapa: 'Integración de sistemas',  clave: 'Movimiento cíclico, destino, equilibrio' },
+  { id: '11_LA_FUERZA',         num: 11, nombre: 'La Fuerza',            etapa: 'Consolidación del SNC',      clave: 'Dominio interior, coraje sutil, energía domada' },
+  { id: '12_EL_COLGADO',        num: 12, nombre: 'El Colgado',           etapa: 'Inversión del feto',         clave: 'Rendición, perspectiva invertida, pausa' },
+  { id: '13_LA_MUERTE',         num: 13, nombre: 'La Muerte',            etapa: 'Inicio del parto',           clave: 'Ruptura interna, disolución, transformación' },
+  { id: '14_LA_TEMPLANZA',      num: 14, nombre: 'La Templanza',         etapa: 'Ruptura de aguas',           clave: 'Flujo, equilibrio, apertura' },
+  { id: '15_EL_DIABLO',         num: 15, nombre: 'El Diablo',            etapa: 'Miedo al parto',             clave: 'Apego, sombra, resistencia interna' },
+  { id: '16_LA_TORRE',          num: 16, nombre: 'La Torre',             etapa: 'Ruptura del útero / descenso', clave: 'Desgarro, caída, transformación repentina' },
+  { id: '17_LA_ESTRELLA',       num: 17, nombre: 'La Estrella',          etapa: 'Rendición',                  clave: 'Luz guía, esperanza, entrega' },
+  { id: '18_LA_LUNA',           num: 18, nombre: 'La Luna',              etapa: 'Tránsito por el canal',      clave: 'Iniciación, misterio, transformación interior' },
+  { id: '19_EL_SOL',            num: 19, nombre: 'El Sol',               etapa: 'Instante antes del nacimiento', clave: 'Revelación, claridad, plenitud' },
+  { id: '20_EL_JUICIO',         num: 20, nombre: 'El Juicio',            etapa: 'Último empuje, despertar',   clave: 'Llamado, revelación, trascendencia' },
+  { id: '21_EL_MUNDO',          num: 21, nombre: 'El Mundo',             etapa: 'Plenitud prenatal',          clave: 'Unidad, totalidad, coronación' },
+];
+
+const SPREADS = [
+  {
+    id: 'carta-del-dia',
+    nombre: 'Carta del Día',
+    icono: '☽',
+    cartas: 1,
+    desc: 'Una carta. Un mensaje. Una semilla de conciencia para hoy.',
+    posiciones: ['El mensaje del día']
+  },
+  {
+    id: 'dos-caminos',
+    nombre: 'Dos Caminos',
+    icono: '⚖',
+    cartas: 2,
+    desc: 'Ante una decisión, dos fuerzas se revelan frente a ti.',
+    posiciones: ['Primer camino', 'Segundo camino']
+  },
+  {
+    id: 'tres-tiempos',
+    nombre: 'Tres Tiempos',
+    icono: '✦',
+    cartas: 3,
+    desc: 'El pasado que te formó, el presente que te habita, el futuro que te llama.',
+    posiciones: ['Pasado', 'Presente', 'Futuro']
+  },
+  {
+    id: 'cruz',
+    nombre: 'Cruz del Alma',
+    icono: '✙',
+    cartas: 5,
+    desc: 'Una tirada completa para explorar situación, obstáculo, consejo, influencias y desenlace.',
+    posiciones: ['Situación actual', 'Obstáculo o sombra', 'Consejo del alma', 'Influencia exterior', 'Desenlace potencial']
+  },
+  {
+    id: 'herradura',
+    nombre: 'Herradura',
+    icono: '🌙',
+    cartas: 7,
+    desc: 'El arco completo de una decisión: pasado, presente, camino, obstáculos, influencias, esperanza y desenlace.',
+    posiciones: ['Pasado', 'Presente', 'Influencias ocultas', 'Obstáculos', 'Actitud del entorno', 'Esperanza y temores', 'Desenlace']
+  },
+  {
+    id: 'camino-del-alma',
+    nombre: 'Camino del Alma',
+    icono: '🌀',
+    cartas: 6,
+    desc: 'Un mapa del viaje interior: quién eres, qué ocultas, qué proyectas, qué sanas, qué liberas, qué nace.',
+    posiciones: ['Quién eres', 'Qué ocultas', 'Qué proyectas', 'Qué sanas', 'Qué liberas', 'Qué está naciendo']
+  },
+];
+
+// ════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════
+
+let state = {
+  selectedSpread: null,
+  question: '',
+  shuffleCount: 0,
+  drawnCards: [],
+  revealedCount: 0,
+  readingText: '',
+};
+
+// ════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════
+
+function init() {
+  renderSpreads();
+}
+
+function renderSpreads() {
+  const grid = document.getElementById('spreads-grid');
+  grid.innerHTML = SPREADS.map(s => `
+    <div class="spread-card" id="spread-${s.id}" onclick="selectSpread('${s.id}')">
+      <span class="spread-icon">${s.icono}</span>
+      <div class="spread-name">${s.nombre}</div>
+      <div class="spread-count">${s.cartas} carta${s.cartas > 1 ? 's' : ''}</div>
+      <div class="spread-desc">${s.desc}</div>
+      <div class="spread-positions">
+        ${Array(s.cartas).fill('<div class="spread-dot"></div>').join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function selectSpread(id) {
+  state.selectedSpread = SPREADS.find(s => s.id === id);
+  document.querySelectorAll('.spread-card').forEach(el => el.classList.remove('selected'));
+  document.getElementById('spread-' + id).classList.add('selected');
+}
+
+function goToShuffle() {
+  if (!state.selectedSpread) {
+    // auto-select first if none chosen
+    selectSpread(SPREADS[0].id);
+  }
+  state.shuffleCount = 0;
+  document.getElementById('shuffle-spread-name').textContent = state.selectedSpread.nombre.toUpperCase();
+  document.getElementById('shuffle-count').textContent = 'Mezclas: 0';
+  document.getElementById('btn-draw').style.display = 'none';
+  showScreen('screen-shuffle');
+}
+
+function goToSpread() {
+  showScreen('screen-spread');
+}
+
+function shuffleDeck() {
+  const deck = document.getElementById('shuffle-deck');
+  deck.classList.add('shuffling');
+  setTimeout(() => deck.classList.remove('shuffling'), 500);
+  state.shuffleCount++;
+  document.getElementById('shuffle-count').textContent = `Mezclas: ${state.shuffleCount}`;
+  if (state.shuffleCount >= 3) {
+    document.getElementById('btn-draw').style.display = 'inline-flex';
+  }
+}
+
+function drawCards() {
+  state.question = document.getElementById('question-input').value.trim();
+  const spread = state.selectedSpread;
+
+  // Draw random unique cards
+  const shuffled = [...CARDS].sort(() => Math.random() - 0.5);
+  state.drawnCards = shuffled.slice(0, spread.cartas);
+  state.revealedCount = 0;
+
+  // Build reveal screen
+  document.getElementById('reveal-spread-title').textContent = spread.nombre;
+  document.getElementById('reveal-question-display').textContent =
+    state.question ? `"${state.question}"` : '';
+  document.getElementById('btn-interpret').style.display = 'none';
+
+  const layout = document.getElementById('cards-layout');
+  layout.className = `cards-layout layout-${spread.cartas}`;
+
+  layout.innerHTML = state.drawnCards.map((card, i) => `
+    <div class="card-slot">
+      <div class="card-position-label">${spread.posiciones[i]}</div>
+      <div class="card-face ${spread.cartas === 1 ? 'size-lg' : spread.cartas >= 7 ? 'size-sm' : ''}"
+           id="card-slot-${i}"
+           onclick="revealCard(${i})">
+        <div class="card-inner">
+          <div class="card-back">✦</div>
+          <div class="card-front">
+            <img src="cards/${card.id}.png" alt="${card.nombre}" />
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  showScreen('screen-reveal');
+}
+
+function revealCard(index) {
+  const el = document.getElementById('card-slot-' + index);
+  if (el.classList.contains('revealed')) return;
+  el.classList.add('revealed');
+  state.revealedCount++;
+  if (state.revealedCount === state.drawnCards.length) {
+    document.getElementById('btn-interpret').style.display = 'inline-flex';
+  }
+}
+
+// ════════════════════════════════════════════════
+// INTERPRETATION
+// ════════════════════════════════════════════════
+
+async function goToInterpretation() {
+  showScreen('screen-interpretation');
+
+  // Render mini cards
+  const row = document.getElementById('summary-cards-row');
+  row.innerHTML = state.drawnCards.map((card, i) => `
+    <div class="mini-card">
+      <img src="cards/${card.id}.png" alt="${card.nombre}" />
+      <span>${state.selectedSpread.posiciones[i]}</span>
+    </div>
+  `).join('');
+
+  document.getElementById('loading-state').style.display = 'block';
+  document.getElementById('reading-output').style.display = 'none';
+
+  const loadingMessages = [
+    'Las cartas están hablando...',
+    'El alma está tejiendo su mensaje...',
+    'Escuchando el susurro de los arcanos...',
+    'El útero cósmico abre sus secretos...',
+  ];
+  let msgIdx = 0;
+  const loadingEl = document.getElementById('loading-text');
+  const msgInterval = setInterval(() => {
+    msgIdx = (msgIdx + 1) % loadingMessages.length;
+    loadingEl.textContent = loadingMessages[msgIdx];
+  }, 2500);
+
+  try {
+    const reading = await fetchInterpretation();
+    state.readingText = reading;
+    clearInterval(msgInterval);
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('reading-output').style.display = 'block';
+    document.getElementById('reading-content').innerHTML = formatReading(reading);
+  } catch (err) {
+    clearInterval(msgInterval);
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('reading-output').style.display = 'block';
+    document.getElementById('reading-content').innerHTML =
+      `<p style="color:var(--rose);font-style:italic;">Ha habido un error al conectar con la lectura. Por favor, inténtalo de nuevo.</p>`;
+    console.error(err);
+  }
+}
+
+async function fetchInterpretation() {
+  const spread = state.selectedSpread;
+  const cards = state.drawnCards;
+
+  const systemPrompt = buildSystemPrompt();
+  const userMessage = buildUserMessage(spread, cards, state.question);
+
+  const response = await fetch('/api/interpret', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userMessage }]
+    })
+  });
+
+  if (!response.ok) throw new Error('API error: ' + response.status);
+  const data = await response.json();
+  return data.content.map(b => b.text || '').join('');
+}
+
+function buildSystemPrompt() {
+  return `Eres el intérprete oficial del Tarot del Alma Naciente, un sistema simbólico único que reinterpreta los 22 Arcanos Mayores como un viaje iniciático desde la concepción hasta el nacimiento.
+
+FILOSOFÍA ESENCIAL:
+Este tarot representa la encarnación del alma, la creación del cuerpo, la memoria prenatal y los ciclos de transformación. Cada carta es simultáneamente una etapa biológica, una fase psicológica, un arquetipo espiritual y un estado de conciencia.
+
+El simbolismo fetal es la clave primaria de interpretación. Las referencias al tarot tradicional son solo apoyo secundario.
+
+TONO DE LAS LECTURAS:
+Poético, profundo, íntimo, simbólico, emocional, espiritual y terapéutico. Nunca frío ni técnico.
+Usa metáforas de agua, útero, respiración, luz, nacimiento, transformación, silencio y despertar.
+NO hagas predicciones absolutas. NO uses lenguaje fatalista. NO asustes. Cada carta contiene luz y sombra. Interpreta como procesos internos de evolución.
+
+FORMATO DE RESPUESTA:
+Usa encabezados con # para cada sección. Sé generoso en profundidad pero no excesivamente largo. El tono debe sentirse como una lectura íntima y personal, nunca como un texto genérico.
+
+Estructura:
+# Lectura General
+# [Nombre de la carta] — [Posición]
+(una sección por cada carta)
+# Relación entre las cartas
+# Síntesis
+# Una pregunta para integrar`;
+}
+
+function buildUserMessage(spread, cards, question) {
+  const cardsList = cards.map((card, i) =>
+    `Carta ${i+1} — Posición: "${spread.posiciones[i]}"
+  Nombre: ${card.nombre}
+  Etapa fetal: ${card.etapa}
+  Clave simbólica: ${card.clave}`
+  ).join('\n\n');
+
+  return `Tirada: ${spread.nombre}
+Pregunta del consultante: ${question || '(Sin pregunta específica — lectura abierta)'}
+
+Cartas reveladas:
+${cardsList}
+
+Por favor, genera la interpretación completa de esta tirada.`;
+}
+
+function formatReading(text) {
+  // Convert markdown to HTML
+  return text
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/^(?!<[h|b|p])(.+)$/gm, '<p>$1</p>')
+    .replace(/<p><\/p>/g, '')
+    .replace(/<p>(<h[12]>)/g, '$1')
+    .replace(/(<\/h[12]>)<\/p>/g, '$1');
+}
+
+// ════════════════════════════════════════════════
+// PDF
+// ════════════════════════════════════════════════
+
+async function downloadPDF() {
+  const { jsPDF } = window.jspdf;
+
+  // Populate PDF template
+  const q = state.question ? `"${state.question}"` : 'Lectura abierta';
+  document.getElementById('pdf-question').textContent = q;
+
+  const cardsRow = document.getElementById('pdf-cards-row');
+  cardsRow.innerHTML = state.drawnCards.map((card, i) => `
+    <div class="pdf-mini-card">
+      <img src="cards/${card.id}.png" alt="${card.nombre}" crossorigin="anonymous" />
+      <span>${card.nombre}</span>
+    </div>
+  `).join('');
+
+  // Convert reading text to simple HTML paragraphs
+  const readingEl = document.getElementById('pdf-reading');
+  readingEl.innerHTML = formatReading(state.readingText);
+
+  // Add date
+  const date = new Date().toLocaleDateString('es-ES', { day:'numeric', month:'long', year:'numeric' });
+  document.querySelector('#pdf-template .pdf-footer').textContent =
+    `David Gil · Tarot del Alma Naciente · ${date}`;
+
+  const template = document.getElementById('pdf-template');
+
+  try {
+    const canvas = await html2canvas(template, {
+      scale: 1.5,
+      useCORS: true,
+      backgroundColor: '#0d0b14',
+      logging: false,
+    });
+
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfW = pdf.internal.pageSize.getWidth();
+    const pdfH = (canvas.height * pdfW) / canvas.width;
+
+    // If content exceeds one page, split
+    const pageH = pdf.internal.pageSize.getHeight();
+    if (pdfH <= pageH) {
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
+    } else {
+      let yOffset = 0;
+      let remaining = pdfH;
+      let page = 0;
+      while (remaining > 0) {
+        if (page > 0) pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, -yOffset, pdfW, pdfH);
+        yOffset += pageH;
+        remaining -= pageH;
+        page++;
+      }
+    }
+
+    const spreadName = state.selectedSpread.nombre.replace(/\s+/g, '-').toLowerCase();
+    pdf.save(`tarot-alma-naciente-${spreadName}.pdf`);
+  } catch (err) {
+    console.error('PDF error:', err);
+    alert('No se pudo generar el PDF. Por favor, inténtalo de nuevo.');
+  }
+}
+
+// ════════════════════════════════════════════════
+// WHATSAPP
+// ════════════════════════════════════════════════
+
+function shareWhatsApp() {
+  const spread = state.selectedSpread;
+  const cards = state.drawnCards;
+  const q = state.question;
+
+  let text = `✦ *Tarot del Alma Naciente* ✦\n`;
+  text += `_${spread.nombre}_\n\n`;
+  if (q) text += `Pregunta: _"${q}"_\n\n`;
+  text += `Cartas reveladas:\n`;
+  cards.forEach((card, i) => {
+    text += `• *${spread.posiciones[i]}:* ${card.nombre}\n`;
+  });
+  text += `\n— David Gil`;
+
+  window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+}
+
+// ════════════════════════════════════════════════
+// START OVER
+// ════════════════════════════════════════════════
+
+function startOver() {
+  state = {
+    selectedSpread: null,
+    question: '',
+    shuffleCount: 0,
+    drawnCards: [],
+    revealedCount: 0,
+    readingText: '',
+  };
+  document.getElementById('question-input').value = '';
+  document.querySelectorAll('.spread-card').forEach(el => el.classList.remove('selected'));
+  showScreen('screen-spread');
+}
+
+// ════════════════════════════════════════════════
+// START
+// ════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
