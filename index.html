@@ -521,19 +521,24 @@
     }
 
     .mini-card img {
-      width: 72px;
-      height: 120px;
+      width: 110px;
+      height: 183px;
       object-fit: cover;
-      border-radius: 10px;
+      border-radius: 12px;
       border: 1px solid var(--gold-dim);
+      transition: box-shadow 0.2s;
+    }
+
+    .mini-card:hover img {
+      box-shadow: 0 6px 24px rgba(201,169,110,0.2);
     }
 
     .mini-card span {
-      font-size: 0.68rem;
+      font-size: 0.78rem;
       color: var(--text-dim);
       text-align: center;
       font-style: italic;
-      max-width: 80px;
+      max-width: 110px;
     }
 
     .loading-state {
