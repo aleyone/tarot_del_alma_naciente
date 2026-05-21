@@ -206,7 +206,7 @@
     /* ── Question input ── */
     .question-wrap {
       max-width: 600px;
-      margin: 0 auto 40px;
+      margin: 0 auto 48px;
     }
 
     .question-label {
@@ -424,11 +424,15 @@
       text-align: center;
       text-transform: uppercase;
       max-width: 120px;
+      min-height: 2.6em;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
     }
 
     .card-face {
-      width: 120px;
-      height: 200px;
+      width: 150px;
+      height: 250px;
       border-radius: var(--radius-card);
       background: linear-gradient(135deg, #1a1530, #0f0c1a);
       border: 1px solid var(--gold-dim);
@@ -438,8 +442,8 @@
       position: relative;
     }
 
-    .card-face.size-lg { width: 150px; height: 250px; }
-    .card-face.size-sm { width: 100px; height: 167px; }
+    .card-face.size-lg { width: 180px; height: 300px; }
+    .card-face.size-sm { width: 130px; height: 217px; }
 
     .card-inner {
       position: absolute;
@@ -780,8 +784,6 @@
 
   <!-- ── Screen 1: Choose Spread ── -->
   <section id="screen-spread" class="screen active">
-    <p class="section-title">Elige tu tirada</p>
-    <div class="spreads-grid" id="spreads-grid"></div>
 
     <div class="question-wrap">
       <label class="question-label" for="question-input">
@@ -795,11 +797,9 @@
       ></textarea>
     </div>
 
-    <div class="btn-center">
-      <button class="btn btn-primary" id="btn-to-shuffle" onclick="goToShuffle()">
-        ✦ Continuar
-      </button>
-    </div>
+    <p class="section-title">Elige tu tirada</p>
+    <div class="spreads-grid" id="spreads-grid"></div>
+
   </section>
 
   <!-- ── Screen 2: Shuffle ── -->
@@ -1021,8 +1021,10 @@ function showScreen(id) {
 
 function selectSpread(id) {
   state.selectedSpread = SPREADS.find(s => s.id === id);
-  document.querySelectorAll('.spread-card').forEach(el => el.classList.remove('selected'));
-  document.getElementById('spread-' + id).classList.add('selected');
+  document.querySelectorAll(".spread-card").forEach(el => el.classList.remove("selected"));
+  document.getElementById("spread-" + id).classList.add("selected");
+  state.question = document.getElementById("question-input").value.trim();
+  goToShuffle();
 }
 
 function goToShuffle() {
