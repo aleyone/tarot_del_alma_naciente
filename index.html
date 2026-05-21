@@ -579,6 +579,7 @@
 
     @media (max-width: 600px) {
       .reading-content { padding: 24px 20px; }
+      .card-position-label { font-size: 0.82rem; max-width: 140px; }
     }
 
     .reading-content h1 {
@@ -764,6 +765,90 @@
     .mt-16 { margin-top: 16px; }
     .mt-32 { margin-top: 32px; }
     .text-center { text-align: center; }
+
+    /* ── Card Modal ── */
+    .card-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(8,6,16,0.88);
+      backdrop-filter: blur(6px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: fadeIn 0.25s ease;
+    }
+
+    .card-modal {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--gold-dim);
+      border-radius: 20px;
+      padding: 32px 28px;
+      max-width: 380px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      animation: scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    @keyframes scaleIn {
+      from { transform: scale(0.85); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+
+    .card-modal img {
+      width: 160px;
+      height: 267px;
+      object-fit: cover;
+      border-radius: 14px;
+      border: 1px solid var(--gold-dim);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    }
+
+    .card-modal-name {
+      font-family: 'Cinzel', serif;
+      font-size: 1.1rem;
+      letter-spacing: 0.15em;
+      color: var(--gold-light);
+      text-align: center;
+    }
+
+    .card-modal-etapa {
+      font-size: 0.82rem;
+      letter-spacing: 0.1em;
+      color: var(--mauve-light);
+      text-align: center;
+      font-style: italic;
+    }
+
+    .card-modal-desc {
+      font-size: 0.97rem;
+      color: var(--text);
+      text-align: center;
+      line-height: 1.75;
+      font-style: italic;
+    }
+
+    .card-modal-close {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 1.4rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px;
+      transition: color 0.2s;
+    }
+
+    .card-modal-close:hover { color: var(--gold-light); }
+
   </style>
 </head>
 <body>
@@ -898,28 +983,50 @@
 // ════════════════════════════════════════════════
 
 const CARDS = [
-  { id: '22_EL_LOCO',           num: 0,  nombre: 'El Loco',              etapa: 'Vida en el mundo',           clave: 'Renacimiento, libertad, confianza radical' },
-  { id: '01_EL_MAGO',           num: 1,  nombre: 'El Mago',              etapa: 'El espermatozoide',          clave: 'Movimiento, intención, propósito' },
-  { id: '02_LA_SACERDOTISA',    num: 2,  nombre: 'La Sacerdotisa',       etapa: 'El óvulo en viaje',          clave: 'Receptividad, sabiduría interna, espera sagrada' },
-  { id: '03_LA_EMPERATRIZ',     num: 3,  nombre: 'La Emperatriz',        etapa: 'Concepción',                 clave: 'Fecundación, potencia vital, manifestación' },
-  { id: '04_EL_EMPERADOR',      num: 4,  nombre: 'El Emperador',         etapa: 'Implantación',               clave: 'Arraigo, estructura, anclaje material' },
-  { id: '05_EL_SACERDOTE',      num: 5,  nombre: 'El Sacerdote',         etapa: 'Activación genética',        clave: 'Sabiduría biológica, linaje, herencia' },
-  { id: '06_LOS_ENAMORADOS',    num: 6,  nombre: 'Los Enamorados',       etapa: 'Unión cromosómica',          clave: 'Dualidad integrada, elección vital' },
-  { id: '07_EL_CARRO',          num: 7,  nombre: 'El Carro',             etapa: 'Primera división celular',   clave: 'Dirección interna, impulso, diferenciación' },
-  { id: '08_LA_JUSTICIA',       num: 8,  nombre: 'La Justicia',          etapa: 'División celular (mórula)',  clave: 'Orden sagrado, equilibrio natural, simetría' },
-  { id: '09_EL_ERMITAÑO',       num: 9,  nombre: 'El Ermitaño',          etapa: 'Recogimiento en el útero',   clave: 'Introspección, sabiduría interna, quietud' },
-  { id: '10_RUEDA_DE_LA_FORTUNA', num: 10, nombre: 'Rueda de la Fortuna', etapa: 'Integración de sistemas',  clave: 'Movimiento cíclico, destino, equilibrio' },
-  { id: '11_LA_FUERZA',         num: 11, nombre: 'La Fuerza',            etapa: 'Consolidación del SNC',      clave: 'Dominio interior, coraje sutil, energía domada' },
-  { id: '12_EL_COLGADO',        num: 12, nombre: 'El Colgado',           etapa: 'Inversión del feto',         clave: 'Rendición, perspectiva invertida, pausa' },
-  { id: '13_LA_MUERTE',         num: 13, nombre: 'La Muerte',            etapa: 'Inicio del parto',           clave: 'Ruptura interna, disolución, transformación' },
-  { id: '14_LA_TEMPLANZA',      num: 14, nombre: 'La Templanza',         etapa: 'Ruptura de aguas',           clave: 'Flujo, equilibrio, apertura' },
-  { id: '15_EL_DIABLO',         num: 15, nombre: 'El Diablo',            etapa: 'Miedo al parto',             clave: 'Apego, sombra, resistencia interna' },
-  { id: '16_LA_TORRE',          num: 16, nombre: 'La Torre',             etapa: 'Ruptura del útero / descenso', clave: 'Desgarro, caída, transformación repentina' },
-  { id: '17_LA_ESTRELLA',       num: 17, nombre: 'La Estrella',          etapa: 'Rendición',                  clave: 'Luz guía, esperanza, entrega' },
-  { id: '18_LA_LUNA',           num: 18, nombre: 'La Luna',              etapa: 'Tránsito por el canal',      clave: 'Iniciación, misterio, transformación interior' },
-  { id: '19_EL_SOL',            num: 19, nombre: 'El Sol',               etapa: 'Instante antes del nacimiento', clave: 'Revelación, claridad, plenitud' },
-  { id: '20_EL_JUICIO',         num: 20, nombre: 'El Juicio',            etapa: 'Último empuje, despertar',   clave: 'Llamado, revelación, trascendencia' },
-  { id: '21_EL_MUNDO',          num: 21, nombre: 'El Mundo',             etapa: 'Plenitud prenatal',          clave: 'Unidad, totalidad, coronación' },
+  { id: '22_EL_LOCO',           num: 0,  nombre: 'El Loco',              etapa: 'Vida en el mundo',              clave: 'Renacimiento, libertad, confianza radical',
+    desc: 'Un alma translúcida avanza con los brazos abiertos hacia el horizonte dorado. El Loco no es ingenuidad: es la confianza radical de quien ha atravesado el umbral y elige vivir desde el asombro. Su mensaje: arriésgate a comenzar.' },
+  { id: '01_EL_MAGO',           num: 1,  nombre: 'El Mago',              etapa: 'El espermatozoide',             clave: 'Impulso activo, dirección, decisión',
+    desc: 'En la vastedad del cosmos, una chispa se proyecta con firmeza. El Mago es quien inicia el viaje, quien convierte el deseo en movimiento. Algo ha sido activado: es el momento de actuar con intención.' },
+  { id: '02_LA_SACERDOTISA',    num: 2,  nombre: 'La Sacerdotisa',       etapa: 'El óvulo en viaje',             clave: 'Receptividad profunda, misterio femenino',
+    desc: 'Bajo un arco velado y lunar, el óvulo flota en su camino. Esta carta encarna la receptividad sabia, la espera sagrada, el poder silencioso que sabe sin buscar. No todo debe ser entendido con la mente.' },
+  { id: '03_LA_EMPERATRIZ',     num: 3,  nombre: 'La Emperatriz',        etapa: 'Concepción',                    clave: 'Vida en potencia, fecundación, creatividad vital',
+    desc: 'En el corazón de una flor cósmica, una esfera luminosa brota conectada por filamentos de luz y raíz. La Emperatriz es la vida recién fecundada: eres tierra fértil y dentro de ti ya se está gestando algo nuevo.' },
+  { id: '04_EL_EMPERADOR',      num: 4,  nombre: 'El Emperador',         etapa: 'Implantación',                  clave: 'Enraizamiento, estructura, anclaje material',
+    desc: 'Una esfera luminosa se acuna en el centro de un vientre simbólico rodeado de arquitectura sagrada. El Emperador es el acto de establecerse, de trazar límites que protegen. Es tiempo de definir lo que estás construyendo.' },
+  { id: '05_EL_SACERDOTE',      num: 5,  nombre: 'El Sacerdote',         etapa: 'Activación genética',           clave: 'Sabiduría biológica, linaje, herencia',
+    desc: 'Dos columnas sostienen un espacio sagrado donde se manifiesta una doble hélice luminosa: el ADN, la inscripción antigua que despierta. El Sacerdote es el código activador, el puente entre tu herencia y tu alma.' },
+  { id: '06_LOS_ENAMORADOS',    num: 6,  nombre: 'Los Enamorados',       etapa: 'Unión cromosómica',             clave: 'Dualidad integrada, elección vital',
+    desc: 'Un óvulo luminoso envuelto por dos espirales: una azul, una dorada. No son opuestas, son complementarias. Los Enamorados hablan de un pacto antiguo, de la integración de los opuestos que da lugar a algo completamente nuevo.' },
+  { id: '07_EL_CARRO',          num: 7,  nombre: 'El Carro',             etapa: 'Primera división celular',      clave: 'Dirección interna, impulso, diferenciación',
+    desc: 'Un pequeño cuerpo en forma se desplaza en una corriente luminosa que lo guía como un río estelar. El Carro es la diferenciación: el primer atisbo de que hay un yo navegando, con rumbo propio dentro del gran río.' },
+  { id: '08_LA_JUSTICIA',       num: 8,  nombre: 'La Justicia',          etapa: 'División celular (mórula)',     clave: 'Orden sagrado, equilibrio natural, simetría',
+    desc: 'Una célula en su centro, rodeada de anillos concéntricos armónicos. La Justicia no castiga ni premia: es el orden que emerge solo cuando cada parte ocupa su lugar. Hay un ritmo interno que marca el camino correcto.' },
+  { id: '09_EL_ERMITAÑO',       num: 9,  nombre: 'El Ermitaño',          etapa: 'Recogimiento en el útero',     clave: 'Introspección, sabiduría interna, quietud',
+    desc: 'Un feto recogido sobre sí mismo, envuelto en una cúpula cálida de luz ámbar. El Ermitaño representa el tiempo sagrado de retirada y gestación interna, donde lo esencial se forma lejos del ruido exterior.' },
+  { id: '10_RUEDA_DE_LA_FORTUNA', num: 10, nombre: 'Rueda de la Fortuna', etapa: 'Integración de sistemas',    clave: 'Movimiento cíclico, destino, equilibrio',
+    desc: 'Un feto flota en el centro de una rueda cósmica donde giran los símbolos elementales y el yin-yang. Todo gira a su alrededor, pero él permanece en el centro. Eres el eje inmóvil dentro del movimiento constante de la vida.' },
+  { id: '11_LA_FUERZA',         num: 11, nombre: 'La Fuerza',            etapa: 'Consolidación del SNC',        clave: 'Dominio interior, coraje sutil, energía domada',
+    desc: 'Un feto en posición centrada, envuelto en un halo de energía ardiente. Bajo él reposa un león. La Fuerza no es violencia: es el dominio interior que surge cuando aprendes a sostener tu propia intensidad con amor.' },
+  { id: '12_EL_COLGADO',        num: 12, nombre: 'El Colgado',           etapa: 'Inversión del feto',           clave: 'Rendición, perspectiva invertida, pausa consciente',
+    desc: 'El feto suspendido cabeza abajo, flotando en un óvalo de luz suave. Esta inversión no es una caída: es un acto de confianza. Soltar el control voluntariamente es, a veces, el movimiento más poderoso que existe.' },
+  { id: '13_LA_MUERTE',         num: 13, nombre: 'La Muerte',            etapa: 'Inicio del parto',             clave: 'Ruptura interna, disolución, transformación',
+    desc: 'El feto envuelto por una gran serpiente que lo rodea en espiral. La Muerte en este tarot no habla de fin, sino de umbral: una piel que se muda, una forma que se disuelve para que otra pueda nacer.' },
+  { id: '14_LA_TEMPLANZA',      num: 14, nombre: 'La Templanza',         etapa: 'Ruptura de aguas',             clave: 'Flujo, equilibrio, apertura',
+    desc: 'Una figura etérica suspendida en una vesica piscis luminosa. A cada lado, dos jarras celestiales vierten aguas de tonos complementarios. La Templanza es el arte de mezclar sin forzar, de fluir sin resistencia.' },
+  { id: '15_EL_DIABLO',         num: 15, nombre: 'El Diablo',            etapa: 'Miedo al parto',               clave: 'Apego, sombra, resistencia interna',
+    desc: 'El feto recogido en sí mismo, con el cuerpo en tensión ante un espejo roto. El Diablo no es una fuerza externa: es aquello que se resiste a dejarse ir. La liberación comienza cuando reconoces qué es lo que realmente te ata.' },
+  { id: '16_LA_TORRE',          num: 16, nombre: 'La Torre',             etapa: 'Descenso por el canal',        clave: 'Desgarro, caída, transformación repentina',
+    desc: 'El feto descendiendo dentro de una grieta incandescente que rasga una torre sombría. La Torre es la ruptura necesaria: lo que se derrumba ya no podía sostenerte. En la caída, hay una liberación que ninguna otra carta ofrece.' },
+  { id: '17_LA_ESTRELLA',       num: 17, nombre: 'La Estrella',          etapa: 'Rendición al proceso',         clave: 'Luz guía, esperanza, entrega',
+    desc: 'El feto reposa suspendido en un útero luminoso rodeado de estrellas. Sobre él, una estrella guía brilla con claridad. La Estrella es la fe después de la tormenta: entrégate al proceso con confianza, la luz te precede.' },
+  { id: '18_LA_LUNA',           num: 18, nombre: 'La Luna',              etapa: 'Tránsito por el canal',        clave: 'Iniciación, misterio, transformación interior',
+    desc: 'El feto atraviesa un canal envuelto en brumas. Rostros guardianes, lunas en fases cambiantes. La Luna es el tránsito por lo desconocido: no todo puede verse, pero los guardianes del inconsciente velan el paso.' },
+  { id: '19_EL_SOL',            num: 19, nombre: 'El Sol',               etapa: 'Instante antes del nacimiento', clave: 'Revelación, claridad, plenitud',
+    desc: 'El feto envuelto en una esfera de luz dorada, con un mandala solar sobre él. El Sol es la expansión de la conciencia, la alegría de estar vivo. Lo que antes estaba oculto ahora se revela con una claridad sin precedentes.' },
+  { id: '20_EL_JUICIO',         num: 20, nombre: 'El Juicio',            etapa: 'Último empuje, despertar',     clave: 'Llamado, revelación, trascendencia',
+    desc: 'El alma escucha el llamado final antes de su paso a la vida. El Juicio no evalúa ni condena: convoca. Algo en ti está siendo llamado a despertar, a recordar quién eres más allá de lo que has vivido hasta ahora.' },
+  { id: '21_EL_MUNDO',          num: 21, nombre: 'El Mundo',             etapa: 'Plenitud prenatal',            clave: 'Unidad, totalidad, coronación',
+    desc: 'El feto en posición fetal dentro del mandala universal, rodeado por las cuatro fuerzas cósmicas. El Mundo es el cierre del ciclo y la plenitud del ser completo: has llegado a un momento de integración total.' },
 ];
 
 const SPREADS = [
@@ -1077,7 +1184,7 @@ function drawCards() {
       <div class="card-position-label">${spread.posiciones[i]}</div>
       <div class="card-face ${spread.cartas === 1 ? 'size-lg' : spread.cartas >= 7 ? 'size-sm' : ''}"
            id="card-slot-${i}"
-           onclick="revealCard(${i})">
+           onclick="handleCardClick(${i}, '${card.id}')">
         <div class="card-inner">
           <div class="card-back">✦</div>
           <div class="card-front">
@@ -1091,13 +1198,16 @@ function drawCards() {
   showScreen('screen-reveal');
 }
 
-function revealCard(index) {
+function handleCardClick(index, cardId) {
   const el = document.getElementById('card-slot-' + index);
-  if (el.classList.contains('revealed')) return;
-  el.classList.add('revealed');
-  state.revealedCount++;
-  if (state.revealedCount === state.drawnCards.length) {
-    document.getElementById('btn-interpret').style.display = 'inline-flex';
+  if (!el.classList.contains('revealed')) {
+    el.classList.add('revealed');
+    state.revealedCount++;
+    if (state.revealedCount === state.drawnCards.length) {
+      document.getElementById('btn-interpret').style.display = 'inline-flex';
+    }
+  } else {
+    openModal(cardId);
   }
 }
 
@@ -1111,7 +1221,7 @@ async function goToInterpretation() {
   // Render mini cards
   const row = document.getElementById('summary-cards-row');
   row.innerHTML = state.drawnCards.map((card, i) => `
-    <div class="mini-card">
+    <div class="mini-card" onclick="openModal('${card.id}')" style="cursor:pointer" title="${card.nombre}">
       <img src="cards/${card.id}.png" alt="${card.nombre}" />
       <span>${state.selectedSpread.posiciones[i]}</span>
     </div>
@@ -1335,10 +1445,48 @@ function startOver() {
   showScreen('screen-spread');
 }
 
+
+// ════════════════════════════════════════════════
+// CARD MODAL
+// ════════════════════════════════════════════════
+
+function openModal(cardId) {
+  const card = CARDS.find(c => c.id === cardId);
+  if (!card) return;
+  document.getElementById('modal-img').src = 'cards/' + card.id + '.png';
+  document.getElementById('modal-img').alt = card.nombre;
+  document.getElementById('modal-name').textContent = card.nombre;
+  document.getElementById('modal-etapa').textContent = card.etapa;
+  document.getElementById('modal-desc').textContent = card.desc;
+  document.getElementById('card-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('card-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function closeModalOutside(e) {
+  if (e.target.id === 'card-modal') closeModal();
+}
+
 // ════════════════════════════════════════════════
 // START
 // ════════════════════════════════════════════════
 init();
 </script>
+
+<!-- ══════════════════════════════ CARD MODAL ══════════════════════════════ -->
+<div id="card-modal" class="card-modal-overlay" style="display:none" onclick="closeModalOutside(event)">
+  <div class="card-modal">
+    <button class="card-modal-close" onclick="closeModal()">✕</button>
+    <img id="modal-img" src="" alt="" />
+    <div class="card-modal-name" id="modal-name"></div>
+    <div class="card-modal-etapa" id="modal-etapa"></div>
+    <div class="card-modal-desc" id="modal-desc"></div>
+  </div>
+</div>
+
 </body>
 </html>
