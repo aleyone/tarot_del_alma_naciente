@@ -8,7 +8,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Cinzel:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     /* ── Variables ── */
     :root {
@@ -701,108 +700,6 @@
       background: var(--border);
     }
 
-    /* ── PDF hidden template ── */
-    #pdf-template {
-      position: fixed;
-      left: -9999px;
-      top: 0;
-      width: 794px;
-      background: #0d0b14;
-      color: #e8e0d5;
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      padding: 60px;
-      font-size: 13px;
-      line-height: 1.8;
-    }
-
-    #pdf-template .pdf-header {
-      text-align: center;
-      border-bottom: 1px solid rgba(201,169,110,0.3);
-      padding-bottom: 30px;
-      margin-bottom: 30px;
-    }
-
-    #pdf-template .pdf-title {
-      font-family: 'Cinzel', serif;
-      font-size: 22px;
-      letter-spacing: 0.15em;
-      color: #c9a96e;
-      margin-bottom: 6px;
-    }
-
-    #pdf-template .pdf-subtitle {
-      font-size: 11px;
-      letter-spacing: 0.25em;
-      color: #8b7a9e;
-      text-transform: uppercase;
-    }
-
-    #pdf-template .pdf-question {
-      font-style: italic;
-      color: #b8a8cc;
-      text-align: center;
-      margin-bottom: 24px;
-      font-size: 13px;
-    }
-
-    #pdf-template .pdf-cards-row {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      margin-bottom: 30px;
-    }
-
-    #pdf-template .pdf-mini-card {
-      text-align: center;
-    }
-
-    #pdf-template .pdf-mini-card img {
-      width: 80px;
-      height: 133px;
-      object-fit: cover;
-      border-radius: 10px;
-      border: 1px solid rgba(201,169,110,0.4);
-      display: block;
-      margin-bottom: 4px;
-    }
-
-    #pdf-template .pdf-mini-card span {
-      font-size: 9px;
-      color: #9e96a8;
-      letter-spacing: 0.05em;
-    }
-
-    #pdf-template .pdf-reading {
-      white-space: pre-wrap;
-      color: #e8e0d5;
-    }
-
-    #pdf-template .pdf-reading h1 {
-      font-family: 'Cinzel', serif;
-      font-size: 11px;
-      letter-spacing: 0.2em;
-      color: #c9a96e;
-      text-transform: uppercase;
-      margin: 24px 0 8px;
-    }
-
-    #pdf-template .pdf-reading p {
-      margin-bottom: 10px;
-      font-size: 12px;
-      line-height: 1.75;
-    }
-
-    #pdf-template .pdf-footer {
-      margin-top: 40px;
-      padding-top: 20px;
-      border-top: 1px solid rgba(201,169,110,0.2);
-      text-align: center;
-      font-size: 10px;
-      color: rgba(201,169,110,0.5);
-      letter-spacing: 0.15em;
-      font-family: 'Cinzel', serif;
-    }
-
     /* ── Utility ── */
     .mt-8 { margin-top: 8px; }
     .mt-16 { margin-top: 16px; }
@@ -1023,10 +920,6 @@
   <p class="footer-tagline">Tarot del Alma Naciente · Arcanos del Origen</p>
 </footer>
 
-<!-- ══════════════════════════════ PDF TEMPLATE ══════════════════════════════ -->
-<div id="pdf-template">
-  <div class="pdf-header">
-    <div class="pdf-title">Tarot del Alma Naciente</div>
     <div class="pdf-subtitle">Lectura Personal · Arcanos del Origen</div>
   </div>
   <div class="pdf-question" id="pdf-question"></div>
@@ -1403,65 +1296,230 @@ function formatReading(text) {
 async function downloadPDF() {
   const { jsPDF } = window.jspdf;
 
-  // Populate PDF template
-  const q = state.question ? `"${state.question}"` : 'Lectura abierta';
-  document.getElementById('pdf-question').textContent = q;
-
-  const cardsRow = document.getElementById('pdf-cards-row');
-  cardsRow.innerHTML = state.drawnCards.map((card, i) => `
-    <div class="pdf-mini-card">
-      <img src="cards/${card.id}.png" alt="${card.nombre}" crossorigin="anonymous" />
-      <span>${card.nombre}</span>
-    </div>
-  `).join('');
-
-  // Convert reading text to simple HTML paragraphs
-  const readingEl = document.getElementById('pdf-reading');
-  readingEl.innerHTML = formatReading(state.readingText);
-
-  // Add date
-  const date = new Date().toLocaleDateString('es-ES', { day:'numeric', month:'long', year:'numeric' });
-  document.querySelector('#pdf-template .pdf-footer').textContent =
-    `David Gil · Tarot del Alma Naciente · ${date}`;
-
-  const template = document.getElementById('pdf-template');
-
-  try {
-    const canvas = await html2canvas(template, {
-      scale: 1.5,
-      useCORS: true,
-      backgroundColor: '#0d0b14',
-      logging: false,
+  // ── Helpers ──────────────────────────────────────────────
+  // Convert image URL to base64
+  function imgToBase64(url) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = img.naturalWidth;
+        c.height = img.naturalHeight;
+        c.getContext('2d').drawImage(img, 0, 0);
+        resolve(c.toDataURL('image/jpeg', 0.9));
+      };
+      img.onerror = () => resolve(null);
+      img.src = url + '?v=' + Date.now();
     });
+  }
 
-    const imgData = canvas.toDataURL('image/jpeg', 0.92);
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pdfW = pdf.internal.pageSize.getWidth();
-    const pdfH = (canvas.height * pdfW) / canvas.width;
+  // Wrap text to fit maxWidth, return array of lines
+  function wrapText(doc, text, maxWidth) {
+    return doc.splitTextToSize(text, maxWidth);
+  }
 
-    // If content exceeds one page, split
-    const pageH = pdf.internal.pageSize.getHeight();
-    if (pdfH <= pageH) {
-      pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
-    } else {
-      let yOffset = 0;
-      let remaining = pdfH;
-      let page = 0;
-      while (remaining > 0) {
-        if (page > 0) pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, -yOffset, pdfW, pdfH);
-        yOffset += pageH;
-        remaining -= pageH;
-        page++;
+  // Draw the left accent bar for current page
+  function drawAccentBar(doc) {
+    // Gold top segment
+    doc.setFillColor(201, 169, 110);
+    doc.rect(0, 0, 6, 148.5, 'F');
+    // Mauve bottom segment
+    doc.setFillColor(139, 122, 158);
+    doc.rect(0, 148.5, 6, 148.5, 'F');
+  }
+
+  // Check if we need a new page, add one if so, redraw bar
+  function checkPage(doc, y, needed, pageH, margin) {
+    if (y + needed > pageH - margin) {
+      doc.addPage();
+      drawAccentBar(doc);
+      return margin.top;
+    }
+    return y;
+  }
+
+  // Parse reading text into segments: {type: 'h1'|'h2'|'p', text: string}
+  function parseReading(text) {
+    const segments = [];
+    const lines = text.split('\n');
+    let para = '';
+    for (const line of lines) {
+      if (line.startsWith('# ')) {
+        if (para.trim()) { segments.push({ type: 'p', text: para.trim() }); para = ''; }
+        segments.push({ type: 'h1', text: line.replace(/^# /, '') });
+      } else if (line.startsWith('## ')) {
+        if (para.trim()) { segments.push({ type: 'p', text: para.trim() }); para = ''; }
+        segments.push({ type: 'h2', text: line.replace(/^## /, '') });
+      } else if (line.trim() === '') {
+        if (para.trim()) { segments.push({ type: 'p', text: para.trim() }); para = ''; }
+      } else {
+        // Strip markdown bold/italic
+        const clean = line.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1');
+        para += (para ? ' ' : '') + clean;
       }
     }
-
-    const spreadName = state.selectedSpread.nombre.replace(/\s+/g, '-').toLowerCase();
-    pdf.save(`tarot-alma-naciente-${spreadName}.pdf`);
-  } catch (err) {
-    console.error('PDF error:', err);
-    alert('No se pudo generar el PDF. Por favor, inténtalo de nuevo.');
+    if (para.trim()) segments.push({ type: 'p', text: para.trim() });
+    return segments;
   }
+
+  // ── Setup ────────────────────────────────────────────────
+  const doc = new jsPDF('p', 'mm', 'a4');
+  const PW = 210; // page width mm
+  const PH = 297; // page height mm
+  const LEFT = 14; // left margin (after bar)
+  const RIGHT = 14;
+  const TEXTW = PW - LEFT - RIGHT - 6; // usable text width
+  const MBOT = 18; // bottom margin
+  const MTOP = 16; // top margin for new pages
+
+  // ── Page 1: accent bar ───────────────────────────────────
+  drawAccentBar(doc);
+
+  let y = 20;
+
+  // ── Header ───────────────────────────────────────────────
+  // Title
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.setTextColor(90, 62, 40);
+  doc.text('Tarot del Alma Naciente', PW / 2, y, { align: 'center' });
+  y += 7;
+
+  // Subtitle
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(139, 122, 158);
+  doc.text('LECTURA PERSONAL · ARCANOS DEL ORIGEN', PW / 2, y, { align: 'center' });
+  y += 5;
+
+  // Gold divider line
+  doc.setDrawColor(201, 169, 110);
+  doc.setLineWidth(0.4);
+  doc.line(LEFT + 6, y, PW - RIGHT, y);
+  y += 6;
+
+  // Spread name
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(139, 122, 158);
+  doc.text(state.selectedSpread.nombre.toUpperCase(), PW / 2, y, { align: 'center' });
+  y += 5;
+
+  // Question
+  if (state.question) {
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(10);
+    doc.setTextColor(100, 88, 72);
+    const qLines = wrapText(doc, `"${state.question}"`, TEXTW);
+    qLines.forEach(line => {
+      doc.text(line, PW / 2, y, { align: 'center' });
+      y += 5;
+    });
+  }
+  y += 4;
+
+  // ── Cards row ────────────────────────────────────────────
+  const cards = state.drawnCards;
+  const spread = state.selectedSpread;
+  const CARD_W = 22;
+  const CARD_H = 37;
+  const CARD_GAP = 5;
+  const totalCardsW = cards.length * CARD_W + (cards.length - 1) * CARD_GAP;
+  let cx = (PW - totalCardsW) / 2;
+
+  // Load all card images
+  const cardImgs = await Promise.all(cards.map(c => imgToBase64('cards/' + c.id + '.png')));
+
+  for (let i = 0; i < cards.length; i++) {
+    // Card border
+    doc.setDrawColor(201, 169, 110);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(cx, y, CARD_W, CARD_H, 2, 2, 'S');
+
+    // Card image
+    if (cardImgs[i]) {
+      doc.addImage(cardImgs[i], 'JPEG', cx + 0.5, y + 0.5, CARD_W - 1, CARD_H - 1, '', 'FAST');
+    }
+
+    // Position label below
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6);
+    doc.setTextColor(120, 100, 80);
+    const posLabel = spread.posiciones[i];
+    const posLines = doc.splitTextToSize(posLabel, CARD_W + 2);
+    posLines.forEach((line, li) => {
+      doc.text(line, cx + CARD_W / 2, y + CARD_H + 4 + (li * 3.5), { align: 'center' });
+    });
+
+    cx += CARD_W + CARD_GAP;
+  }
+
+  y += CARD_H + 14;
+
+  // Light separator
+  doc.setDrawColor(220, 210, 195);
+  doc.setLineWidth(0.3);
+  doc.line(LEFT + 6, y, PW - RIGHT, y);
+  y += 8;
+
+  // ── Reading content ──────────────────────────────────────
+  const segments = parseReading(state.readingText);
+
+  for (const seg of segments) {
+    if (seg.type === 'h1') {
+      // Section title with left gold accent
+      y = checkPage(doc, y, 12, PH, MBOT);
+      doc.setFillColor(201, 169, 110);
+      doc.rect(LEFT + 6, y - 3.5, 2, 5, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(90, 62, 40);
+      doc.text(seg.text.toUpperCase(), LEFT + 11, y, {});
+      y += 7;
+
+    } else if (seg.type === 'h2') {
+      y = checkPage(doc, y, 10, PH, MBOT);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(139, 122, 158);
+      doc.text(seg.text, LEFT + 6, y);
+      y += 6;
+
+    } else if (seg.type === 'p') {
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(9);
+      doc.setTextColor(45, 38, 32);
+      const lines = wrapText(doc, seg.text, TEXTW);
+      for (const line of lines) {
+        y = checkPage(doc, y, 5, PH, MBOT);
+        doc.text(line, LEFT + 6, y);
+        y += 5;
+      }
+      y += 3; // paragraph spacing
+    }
+  }
+
+  // ── Footer on every page ──────────────────────────────────
+  const date = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    doc.setDrawColor(201, 169, 110);
+    doc.setLineWidth(0.3);
+    doc.line(LEFT + 6, PH - 12, PW - RIGHT, PH - 12);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(160, 128, 96);
+    doc.text(`David Gil · Tarot del Alma Naciente · ${date}`, PW / 2, PH - 7, { align: 'center' });
+    if (totalPages > 1) {
+      doc.text(`${p} / ${totalPages}`, PW - RIGHT, PH - 7, { align: 'right' });
+    }
+  }
+
+  // ── Save ──────────────────────────────────────────────────
+  const spreadName = spread.nombre.replace(/\s+/g, '-').toLowerCase();
+  doc.save(`tarot-alma-naciente-${spreadName}.pdf`);
 }
 
 // ════════════════════════════════════════════════
