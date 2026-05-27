@@ -1297,6 +1297,18 @@ async function downloadPDF() {
   const { jsPDF } = window.jspdf;
 
   // ── Helpers ──────────────────────────────────────────────
+  // Sanitize text for jsPDF (remove unsupported chars, keep latin)
+  function safe(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u201C\u201D]/g, '"')
+      .replace(/\u2026/g, '...')
+      .replace(/\u2014/g, '-')
+      .replace(/\u2013/g, '-')
+      .replace(/[^\x00-\xFF]/g, '');
+  }
+
   // Convert image URL to base64
   function imgToBase64(url) {
     return new Promise((resolve, reject) => {
@@ -1403,7 +1415,7 @@ async function downloadPDF() {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(139, 122, 158);
-  doc.text(state.selectedSpread.nombre.toUpperCase(), PW / 2, y, { align: 'center' });
+  doc.text(safe(state.selectedSpread.nombre).toUpperCase(), PW / 2, y, { align: 'center' });
   y += 5;
 
   // Question
@@ -1411,7 +1423,7 @@ async function downloadPDF() {
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(10);
     doc.setTextColor(100, 88, 72);
-    const qLines = wrapText(doc, `"${state.question}"`, TEXTW);
+    const qLines = wrapText(doc, safe(`"${state.question}"`), TEXTW);
     qLines.forEach(line => {
       doc.text(line, PW / 2, y, { align: 'center' });
       y += 5;
@@ -1446,7 +1458,7 @@ async function downloadPDF() {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(6);
     doc.setTextColor(120, 100, 80);
-    const posLabel = spread.posiciones[i];
+    const posLabel = safe(spread.posiciones[i]);
     const posLines = doc.splitTextToSize(posLabel, CARD_W + 2);
     posLines.forEach((line, li) => {
       doc.text(line, cx + CARD_W / 2, y + CARD_H + 4 + (li * 3.5), { align: 'center' });
@@ -1475,7 +1487,7 @@ async function downloadPDF() {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
       doc.setTextColor(90, 62, 40);
-      doc.text(seg.text.toUpperCase(), LEFT + 11, y, {});
+      const h1text = safe(seg.text); if (h1text) doc.text(h1text.toUpperCase(), LEFT + 11, y, {});
       y += 7;
 
     } else if (seg.type === 'h2') {
@@ -1483,17 +1495,17 @@ async function downloadPDF() {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8.5);
       doc.setTextColor(139, 122, 158);
-      doc.text(seg.text, LEFT + 6, y);
+      const h2text = safe(seg.text); if (h2text) doc.text(h2text, LEFT + 6, y);
       y += 6;
 
     } else if (seg.type === 'p') {
       doc.setFont('helvetica', 'italic');
       doc.setFontSize(9);
       doc.setTextColor(45, 38, 32);
-      const lines = wrapText(doc, seg.text, TEXTW);
+      const lines = wrapText(doc, safe(seg.text), TEXTW);
       for (const line of lines) {
         y = checkPage(doc, y, 5, PH, MBOT);
-        doc.text(line, LEFT + 6, y);
+        if (line && line.trim()) doc.text(line, LEFT + 6, y);
         y += 5;
       }
       y += 3; // paragraph spacing
@@ -1511,7 +1523,7 @@ async function downloadPDF() {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
     doc.setTextColor(160, 128, 96);
-    doc.text(`David Gil · Tarot del Alma Naciente · ${date}`, PW / 2, PH - 7, { align: 'center' });
+    doc.text(safe(`David Gil - Tarot del Alma Naciente - ${date}`), PW / 2, PH - 7, { align: 'center' });
     if (totalPages > 1) {
       doc.text(`${p} / ${totalPages}`, PW - RIGHT, PH - 7, { align: 'right' });
     }
