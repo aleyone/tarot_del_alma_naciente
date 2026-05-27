@@ -1346,7 +1346,7 @@ async function downloadPDF() {
     if (y + needed > pageH - margin) {
       doc.addPage();
       drawAccentBar(doc);
-      return margin.top;
+      return MTOP;
     }
     return y;
   }
